@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
-import db from '@/lib/db';
+import { getDb } from '@/lib/db';
 import bcrypt from 'bcryptjs';
 
 export async function POST(req: NextRequest) {
   try {
     const { email, password } = await req.json();
-
+    const db = getDb();
     const stmt = db.prepare('SELECT * FROM users WHERE email = ?');
     const user = stmt.get(email) as any;
 
