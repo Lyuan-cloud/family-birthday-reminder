@@ -1,0 +1,8 @@
+name = "family-birthday-reminder"
+compatibility_date = "2026-04-01"
+pages_build_output_dir = ".vercel/output/static"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "family-birthday-reminder-db"
+database_id = "5e0e8e0e-e0e8-4e0e-8e0e-e0e8e0e8e0e8"
