@@ -18,6 +18,6 @@ jobs:
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: '1830ad472d0d8ad7511c7ed36eab2d49'
-          projectName:  'family-birthday-rminder'
+          projectName: 'family-birthday-reminder'
           directory: 'public'
           wranglerVersion: '3'
