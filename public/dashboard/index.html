@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard - Birthday Reminder</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-50 min-h-screen">
+
+  <!-- 顶部导航 -->
+  <nav class="bg-white shadow-sm px-6 py-4 flex justify-between items-center">
+    <h1 class="text-xl font-bold text-blue-600">🎂 Birthday Reminder</h1>
+    <div class="flex items-center gap-4">
+      <img id="userAvatar" src="" class="w-8 h-8 rounded-full hidden" />
+      <span id="userName" class="text-sm text-gray-700"></span><a href="/api/auth/logout" class="text-sm text-red-500 hover:underline">Logout</a>
+    </div>
+  </nav>
+
+  <div class="max-w-4xl mx-auto px-4 py-8">
+
+    <!-- 即将到来的生日 -->
+    <div class="bg-white rounded-xl shadow-sm p-6 mb-6">
+      <h2 class="text-lg font-semibold mb-4">🎉 Upcoming Birthdays</h2>
+      <div id="upcomingList" class="space-y-3">
+        <p class="text-gray-400 text-sm">Loading...</p>
+      </div>
+    </div>
+
+    <!-- 添加生日 -->
+    <div class="bg-white rounded-xl shadow-sm p-6 mb-6">
+      <h2 class="text-lg font-semibold mb-4">➕ Add Birthday</h2>
+      <form id="addForm" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <label class="block text-sm font-medium mb-1">Name *</label>
+          <input type="text" id="addName" class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="e.g. Mom" required>
+        </div>
+        <div>
+          <label class="block text-sm font-medium mb-1">Birthday *</label>
+          <input type="date" id="addDate" class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+        </div>
+        <div>
+          <label class="block text-sm font-medium mb-1">Relationship *</label>
+          <select id="addRelationship" class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+            <option value="family">Family</option>
+            <option value="friend">Friend</option>
+            <option value="colleague">Colleague</option>
+            <option value="other">Other</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-sm font-medium mb-1">Remind me (days before)</label>
+          <input type="number" id="addReminder" value="7" min="1" max="30" class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+        </div>
+        <div class="md:col-span-2">
+          <button type="submit" class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition font-medium">Add Birthday</button>
+        </div>
+      </form>
+    </div>
+
+    <!-- 所有生日列表 -->
+    <div class="bg-white rounded-xl shadow-sm p-6">
+      <h2 class="text-lg font-semibold mb-4">📋 All Birthdays</h2>
+      <div id="allList" class="space-y-3">
+        <p class="text-gray-400 text-sm">Loading...</p>
+      </div>
+    </div>
+    <div id="editModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+    <div class="bg-white rounded-xl p-6 w-full max-w-md mx-4">
+      <h3 class="text-lg font-semibold mb-4">✏️ Edit Birthday</h3>
+      <form id="editForm" class="space-y-4">
+        <input type="hidden" id="editId">
+        <div><label class="block text-sm font-medium mb-1">Name</label><input type="text" id="editName" class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required></div>
+        <div><label class="block text-sm font-medium mb-1">Birthday</label><input type="date" id="editDate" class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required></div>
+        <div><label class="block text-sm font-medium mb-1">Relationship</label><select id="editRelationship" class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"><option value="family">Family</option><option value="friend">Friend</option><option value="colleague">Colleague</option><option value="other">Other</option></select></div>
+        <div><label class="block text-sm font-medium mb-1">Remind me (days before)</label><input type="number" id="editReminder" min="1" max="30" class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"></div>
+        <div class="flex gap-3">
+          <button type="submit" class="flex-1 bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition font-medium">Save</button>
+          <button type="button" onclick="closeModal()" class="flex-1 border py-2 rounded-lg hover:bg-gray-50 transition">Cancel</button>
+        </div>
+      </form>
+    </div>
+  <script>
+     function daysUntilBirthday(dateStr) {
+      const today = new Date(); today.setHours(0,0,0,0);
+      const parts = dateStr.split('-');
+      let next = new Date(today.getFullYear(), parseInt(parts[1])-1, parseInt(parts[2]));
+      if (next < today) next.setFullYear(today.getFullYear() + 1);
+      return Math.round((next - today) / 86400000);
+    }
+    function formatDate(d) {
+      const p = d.split('-'), m = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+      return `${m[parseInt(p[1])-1]} ${parseInt(p[2])}`;
+    }
+    function badge(rel) {
+      const c = {family:'bg-pink-100 text-pink-700',friend:'bg-blue-100 text-blue-700',colleague:'bg-green-100 text-green-700',other:'bg-gray-100 text-gray-700'};
+      return `<span class="text-xs px-2 py-0.5 rounded-full ${c[rel]||c.other}">${rel}</span>`;
+    }
+    async function loadUser() {
+      const res = await fetch('/api/auth/me');
+      if (!res.ok) { window.location.href='/login'; return; }
+      const {user} = await res.json();
+      document.getElementById('userName').textContent = user.name;
+      if (user.avatar) { const img=document.getElementById('userAvatar'); img.src=user.avatar; img.classList.remove('hidden'); }
+    }
+    async function loadBirthdays() {
+      const res = await fetch('/api/birthdays');
+      if (!res.ok) { window.location.href='/login'; return; }
+      const {birthdays} = await res.json();
+      const upcoming = birthdays.map(b=>({...b,days:daysUntilBirthday(b.date)})).filter(b=>b.days<=30).sort((a,b)=>a.days-b.days);
+      const upEl = document.getElementById('upcomingList');
+      upEl.innerHTML = upcoming.length === 0
+        ? '<p class="text-gray-400 text-sm">No birthdays in the next 30 days 🎈</p>'
+        : upcoming.map(b=>`<div class="flex items-center justify-between p-3 bg-yellow-50 rounded-lg border border-yellow-100"><div class="flex items-center gap-3"><span class="text-2xl">${b.days===0?'🎂':'🎁'}</span><div><p class="font-medium">${b.name}</p><p class="text-sm text-gray-500">${formatDate(b.date)} · ${badge(b.relationship)}</p></div></div><span class="text-sm font-semibold ${b.days===0?'text-red-500':'text-orange-500'}">${b.days===0?'🎉 Today!':b.days+' days'}</span></div>`).join('');
+      const allEl = document.getElementById('allList');
+      allEl.innerHTML = birthdays.length === 0
+        ? '<p class="text-gray-400 text-sm">No birthdays yet. Add one above! 👆</p>'
+        : birthdays.map(b=>`<div class="flex items-center justify-between p-3 border rounded-lg hover:bg-gray-50"><div><p class="font-medium">${b.name} ${badge(b.relationship)}</p><p class="text-sm text-gray-500">${formatDate(b.date)}${b.year?' '+b.year:''} · Remind ${b.reminder_days} days before</p></div><div class="flex gap-2"><button onclick='openEdit(${JSON.stringify(b)})' class="text-sm text-blue-600 hover:underline">Edit</button><button onclick="deleteBirthday('${b.id}')" class="text-sm text-red-500 hover:underline">Delete</button></div></div>`).join('');
+    }
+    document.getElementById('addForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      await fetch('/api/birthdays', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:document.getElementById('addName').value,date:document.getElementById('addDate').value,relationship:document.getElementById('addRelationship').value,reminder_days:parseInt(document.getElementById('addReminder').value)})});
+      e.target.reset(); document.getElementById('addReminder').value=7; loadBirthdays();
+    });
+    async function deleteBirthday(id) {
+      if (!confirm('Delete this birthday?')) return;
+      await fetch(`/api/birthdays/${id}`,{method:'DELETE'}); loadBirthdays();
+    }
+    function openEdit(b) {
+      document.getElementById('editId').value=b.id;
+      document.getElementById('editName').value=b.name;
+      document.getElementById('editDate').value=b.date;
+      document.getElementById('editRelationship').value=b.relationship;
+document.getElementById('editReminder').value=b.reminder_days;
+document.getElementById('editModal').classList.remove('hidden');
+}
+function closeModal() { document.getElementById('editModal').classList.add('hidden'); }
+document.getElementById('editForm').addEventListener('submit', async (e) => {
+e.preventDefault();
+const id = document.getElementById('editId').value;
+await fetch(/api/birthdays/${id},{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:document.getElementById('editName').value,date:document.getElementById('editDate').value,relationship:document.getElementById('editRelationship').value,reminder_days:parseInt(document.getElementById('editReminder').value)})});
+closeModal(); loadBirthdays();
+});
+loadUser(); loadBirthdays();
+</script>
+</body>
+</html>
