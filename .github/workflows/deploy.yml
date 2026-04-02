@@ -13,23 +13,11 @@ jobs:
       - name: Checkout repo
         uses: actions/checkout@v3
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v3
-        with:
-          node-version: '18'
-
-      - name: Install dependencies
-        run: npm install
-
-      - name: Build
-        run: npm run build
-        env:
-          NODE_ENV: production
-
       - name: Deploy to Cloudflare Pages
         uses: cloudflare/pages-action@v1
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: '1830ad472d0d8ad7511c7ed36eab2d49'
           projectName: 'familybirthdayreminder'
-          directory: '.next'
+          directory: 'public'
+          wranglerVersion: '3'
