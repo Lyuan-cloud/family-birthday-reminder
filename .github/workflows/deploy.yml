@@ -23,6 +23,8 @@ jobs:
 
       - name: Build
         run: npm run build
+        env:
+          NODE_ENV: production
 
       - name: Deploy to Cloudflare Pages
         uses: cloudflare/pages-action@v1
@@ -30,4 +32,4 @@ jobs:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: '1830ad472d0d8ad7511c7ed36eab2d49'
           projectName: 'familybirthdayreminder'
-          directory: './dist'
+          directory: '.next'
